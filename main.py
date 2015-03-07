@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+
 import re
 import json
 from subprocess import call
@@ -21,6 +23,17 @@ def fequal(a, b):
 
 def ratio(a, b):
     return a / b
+
+
+def detect_desktop_environment():
+    desktop_env = "unknown"
+    if os.environ.get("KDE_FULL_SESSION") == "true":
+        desktop_env = "kde"
+    elif os.environ.get("GNOME_DESKTOP_SESSION_ID"):
+        desktop_env = "gnome"
+    elif sys.platform == "win32":
+        desktop_env = "windows"
+    return desktop_env
 
 
 def pick_up_a_url(r18=False):
@@ -54,8 +67,17 @@ def download_image(image_url, filename):
 
 
 def set_wallpaper(path):
-    path = "file://%s" % path
-    call(("gsettings", "set", "org.gnome.desktop.background", "picture-uri", path))
+    desktop = detect_desktop_environment()
+    if desktop == "gnome":
+        path = "file://%s" % path
+        call(("gsettings", "set", "org.gnome.desktop.background", "picture-uri", path))
+    elif desktop == "kde":
+        raise NotImplementedError("How to change wallpaper for KDE?")
+    elif desktop == "windows":
+        path = '"%s"' % path
+        call(("reg", "add", "HKCU\Control Panel\Desktop", "/v", "Wallpaper", "/f", "/t", "REG_SZ", "/d", path))
+    else:
+        raise NotImplementedError("I don't know how to do it")
 
 
 def main():
