@@ -59,10 +59,13 @@ def set_wallpaper(path):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--width", dest="width", type=int, default=0)
-    parser.add_argument("--height", dest="height", type=int, default=0)
-    parser.add_argument("--r18", dest="r18", type=bool, default=False)
+    parser = argparse.ArgumentParser(description="Fetch a random wallpaper from Konachan")
+    parser.add_argument("--width", dest="width", type=int, default=0,
+                        help="show a notice if the ratio of the image not matches with your suggestion")
+    parser.add_argument("--height", dest="height", type=int, default=0,
+                        help="show a notice if the ratio of the image not matches with your suggestion")
+    parser.add_argument("--r18", dest="r18", action="store_true", default=False,
+                        help="allow to fetch explicit (R-18) images")
     args = parser.parse_args()
 
     random_url = pick_up_a_url(args.r18)
