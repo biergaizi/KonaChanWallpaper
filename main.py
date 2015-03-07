@@ -6,6 +6,7 @@ import sys
 import re
 import json
 from subprocess import call
+from time import sleep
 import argparse
 
 import pycurl
@@ -58,10 +59,25 @@ def fetch_image_info(image_page_url):
 
 
 def download_image(image_url, filename):
+
+    def progress(dt, d, ut, u):
+        global progress_prev
+        if dt == 0:
+            return
+        progress = int(d / dt * 100)
+        if progress != progress_prev and progress % 10 == 0:
+            print("downloaded", "%d%%" % progress)
+        progress_prev = progress
+
     print("\nnow downloading %s..." % filename)
     c = curl.Curl()
+
+    global progress_prev
+    progress_prev = 0
+    c.set_option(pycurl.NOPROGRESS, 0)
+    c.set_option(pycurl.PROGRESSFUNCTION, progress)
+
     data = c.get(image_url)
-    c.set_option(pycurl.PROGRESSFUNCTION, lambda dt, d, ut, u: print("%f%%" % d / dt))
     with open(filename, "wb") as file:
         file.write(data)
 
@@ -84,20 +100,24 @@ def set_wallpaper(path):
 def main():
     parser = argparse.ArgumentParser(description="Fetch a random wallpaper from Konachan")
     parser.add_argument("--width", dest="width", type=int, default=0,
-                        help="show a notice if the ratio of the image not matches with your suggestion")
+                        help="download only if the ratio of the image not matches with your suggestion")
     parser.add_argument("--height", dest="height", type=int, default=0,
-                        help="show a notice if the ratio of the image not matches with your suggestion")
+                        help="download only if the ratio of the image not matches with your suggestion")
     parser.add_argument("--r18", dest="r18", action="store_true", default=False,
                         help="allow to fetch explicit (R-18) images")
     args = parser.parse_args()
 
-    random_url = pick_up_a_url(args.r18)
-    full_info = fetch_image_info(random_url)
+    while 1:
+        random_url = pick_up_a_url(args.r18)
+        full_info = fetch_image_info(random_url)
 
-    image_info = full_info["posts"][0]
-    if (args.height and args.width and
-       not fequal(ratio(image_info["height"], image_info["width"]), ratio(args.height, args.width))):
-        print("The ratio is not prefect, maybe you'd like to try again?")
+        image_info = full_info["posts"][0]
+        if (args.height and args.width and
+           not fequal(ratio(image_info["height"], image_info["width"]), ratio(args.height, args.width))):
+            print("ratio is not perfect, try again...")
+            sleep(5)
+        else:
+            break
 
     print("tags:")
     tag_info = full_info["tags"]
