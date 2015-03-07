@@ -67,6 +67,7 @@ def download_image(image_url, filename):
 
 
 def set_wallpaper(path):
+    path = os.path.realpath(path)
     desktop = detect_desktop_environment()
     if desktop == "gnome":
         path = "file://%s" % path
@@ -106,7 +107,7 @@ def main():
     filename = str(image_info["id"])
 
     download_image(image_info["file_url"], filename)
-    set_wallpaper(os.path.realpath(filename))
+    set_wallpaper(filename)
 
 
 if __name__ == "__main__":
