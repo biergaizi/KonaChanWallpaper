@@ -4,12 +4,10 @@ import os
 import re
 import json
 from subprocess import call
+import argparse
 
 import pycurl
 import curl
-
-HEIGHT = 1920
-WIDTH = 1080
 
 
 # TODO:
@@ -56,11 +54,17 @@ def set_wallpaper(path):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--width", dest="width", type=int, default=0)
+    parser.add_argument("--height", dest="height", type=int, default=0)
+    args = parser.parse_args()
+
     random_url = pick_up_a_url()
     full_info = fetch_image_info(random_url)
 
     image_info = full_info["posts"][0]
-    if not fequal(ratio(image_info["height"], image_info["width"]), ratio(HEIGHT, WIDTH)):
+    if (args.height and args.width and
+       not fequal(ratio(image_info["height"], image_info["width"]), ratio(args.height, args.width))):
         print("The ratio is not prefect, maybe you'd like to try again?")
 
     print("tags:")
