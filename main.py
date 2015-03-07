@@ -13,8 +13,6 @@ import curl
 # TODO:
 # * tag filters
 # * better error handling
-# * safe mode (easy)
-# * commmand-line arguments
 
 
 def fequal(a, b):
@@ -25,10 +23,17 @@ def ratio(a, b):
     return a / b
 
 
-def pick_up_a_url():
+def pick_up_a_url(r18=False):
+    URL_SAFE = "http://konachan.net/post/random"
+    URL_R18 = "http://konachan.com/post/random"
+
     c = curl.Curl()
     c.set_option(pycurl.FOLLOWLOCATION, False)
-    c.get("http://konachan.net/post/random")
+
+    if r18:
+        c.get(URL_R18)
+    else:
+        c.get(URL_SAFE)
     return c.get_info(pycurl.REDIRECT_URL)
 
 
@@ -57,9 +62,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--width", dest="width", type=int, default=0)
     parser.add_argument("--height", dest="height", type=int, default=0)
+    parser.add_argument("--r18", dest="r18", type=bool, default=False)
     args = parser.parse_args()
 
-    random_url = pick_up_a_url()
+    random_url = pick_up_a_url(args.r18)
     full_info = fetch_image_info(random_url)
 
     image_info = full_info["posts"][0]
