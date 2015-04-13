@@ -53,6 +53,8 @@ def detect_desktop_environment():
         desktop_env = "kde"
     elif os.environ.get("GNOME_DESKTOP_SESSION_ID"):
         desktop_env = "gnome"
+    elif os.environ.get("MATE_DESKTOP_SESSION_ID"):
+        desktop_env = "mate"
     elif sys.platform == "win32":
         desktop_env = "windows"
     return desktop_env
@@ -109,6 +111,8 @@ def set_wallpaper(path):
     if desktop == "gnome":
         path = "file://%s" % path
         call(("gsettings", "set", "org.gnome.desktop.background", "picture-uri", path))
+    elif desktop == "mate":
+        call(("gsettings", "set", "org.mate.background", "picture-filename", path))
     elif desktop == "kde":
         raise NotImplementedError("How to change wallpaper for KDE?")
     elif desktop == "windows":
