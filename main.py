@@ -83,11 +83,11 @@ def fetch_image_info(image_page_url):
 
 def download_image(image_url, filename):
 
-    def progress(dt, d, ut, u):
+    def progress(dwn_total, dwn, up_total, up):
         global progress_prev
-        if dt == 0:
+        if dwn_total == 0:
             return
-        progress = int(d / dt * 100)
+        progress = int(dwn / dwn_total * 100)
         if progress != progress_prev and progress % 10 == 0:
             print("downloaded", "%d%%" % progress)
         progress_prev = progress
