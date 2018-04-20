@@ -87,7 +87,9 @@ def pick_up_a_url(curl, r18=False):
     else:
         curl.get(URL_SAFE)
 
-    return curl.get_info(pycurl.REDIRECT_URL)
+    url = curl.get_info(pycurl.REDIRECT_URL)
+    print("Selected", url)
+    return url
 
 
 def fetch_image_info(curl, image_page_url):
