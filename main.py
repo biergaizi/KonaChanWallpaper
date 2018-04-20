@@ -60,11 +60,22 @@ def detect_desktop_environment():
     return desktop_env
 
 
+def set_curl_options(curl):
+    ssl_library = pycurl.version_info()[5]
+    if "OpenSSL" in ssl_library or "LibreSSL" in ssl_library:
+        curl.set_option(pycurl.SSL_CIPHER_LIST, "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384")
+    elif "GnuTLS".lower() in ssl_library.lower():  # not sure about the capitalization, use lower case
+        curl.set_option(pycurl.SSL_CIPHER_LIST, "PFS")
+    else:
+        print("Warning: unknown/untested SSL/TLS library")
+
+
 def pick_up_a_url(r18=False):
     URL_SAFE = "https://konachan.net/post/random"
     URL_R18 = "https://konachan.com/post/random"
 
     c = curl.Curl()
+    set_curl_options(c)
     c.set_option(pycurl.FOLLOWLOCATION, False)
 
     if r18:
@@ -76,6 +87,7 @@ def pick_up_a_url(r18=False):
 
 def fetch_image_info(image_page_url):
     c = curl.Curl()
+    set_curl_options(c)
     html = c.get(image_page_url).decode("UTF-8")
     json_info = re.findall('(?<=Post.register_resp\\().*(?=\\);)', html)[0]
     return json.loads(json_info)
@@ -94,6 +106,7 @@ def download_image(image_url, filename):
 
     print("\nnow downloading %s..." % filename)
     c = curl.Curl()
+    set_curl_options(c)
 
     global progress_prev
     progress_prev = 0
