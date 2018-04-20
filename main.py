@@ -61,6 +61,11 @@ def detect_desktop_environment():
 
 
 def set_curl_options(curl):
+    try:
+        curl.set_option(pycurl.HTTP_VERSION, pycurl.CURL_HTTP_VERSION_2_0)
+    except AttributeError:
+        pass
+
     ssl_library = pycurl.version_info()[5]
     if "OpenSSL" in ssl_library or "LibreSSL" in ssl_library:
         curl.set_option(pycurl.SSL_CIPHER_LIST, "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384")
