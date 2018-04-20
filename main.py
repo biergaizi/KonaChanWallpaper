@@ -61,8 +61,8 @@ def detect_desktop_environment():
 
 
 def pick_up_a_url(r18=False):
-    URL_SAFE = "http://konachan.net/post/random"
-    URL_R18 = "http://konachan.com/post/random"
+    URL_SAFE = "https://konachan.net/post/random"
+    URL_R18 = "https://konachan.com/post/random"
 
     c = curl.Curl()
     c.set_option(pycurl.FOLLOWLOCATION, False)
@@ -150,8 +150,12 @@ def main():
         print(key)
 
     filename = str(image_info["id"])
+    if image_info["file_url"].startswith("https"):
+        file_url = image_info["file_url"]
+    else:
+        file_url = "https:%s" % image_info["file_url"]
 
-    download_image(image_info["file_url"], filename)
+    download_image(file_url, filename)
     set_wallpaper(filename)
 
 
