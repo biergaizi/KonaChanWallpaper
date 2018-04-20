@@ -70,30 +70,28 @@ def set_curl_options(curl):
         print("Warning: unknown/untested SSL/TLS library")
 
 
-def pick_up_a_url(r18=False):
+def pick_up_a_url(curl, r18=False):
     URL_SAFE = "https://konachan.net/post/random"
     URL_R18 = "https://konachan.com/post/random"
 
-    c = curl.Curl()
-    set_curl_options(c)
-    c.set_option(pycurl.FOLLOWLOCATION, False)
+    # XXX: Side-effect on the curl instance, but it doesn't matter.
+    curl.set_option(pycurl.FOLLOWLOCATION, False)
 
     if r18:
-        c.get(URL_R18)
+        curl.get(URL_R18)
     else:
-        c.get(URL_SAFE)
-    return c.get_info(pycurl.REDIRECT_URL)
+        curl.get(URL_SAFE)
+
+    return curl.get_info(pycurl.REDIRECT_URL)
 
 
-def fetch_image_info(image_page_url):
-    c = curl.Curl()
-    set_curl_options(c)
-    html = c.get(image_page_url).decode("UTF-8")
+def fetch_image_info(curl, image_page_url):
+    html = curl.get(image_page_url).decode("UTF-8")
     json_info = re.findall('(?<=Post.register_resp\\().*(?=\\);)', html)[0]
     return json.loads(json_info)
 
 
-def download_image(image_url, filename):
+def download_image(curl, image_url, filename):
 
     def progress(dwn_total, dwn, up_total, up):
         global progress_prev
@@ -105,15 +103,23 @@ def download_image(image_url, filename):
         progress_prev = progress
 
     print("\nnow downloading %s..." % filename)
-    c = curl.Curl()
-    set_curl_options(c)
 
+    # XXX: Side-effect on the curl instance, but it doesn't matter.
     global progress_prev
     progress_prev = 0
-    c.set_option(pycurl.NOPROGRESS, 0)
-    c.set_option(pycurl.PROGRESSFUNCTION, progress)
+    curl.set_option(pycurl.NOPROGRESS, 0)
+    curl.set_option(pycurl.PROGRESSFUNCTION, progress)
 
-    data = c.get(image_url)
+    # HACK: curl doesn't truncate the old data, multiple GETs would not flush the old
+    # data from the buffer and it results in returning both previous data and new data.
+    # It is uncertain if this behavior is a feature or a bug due to the fact that curl.Curl()
+    # is rarely used and poorly documented. After all, it is just a simple class around 100
+    # lines... Thus we manually truncate the data here.
+    # See also: https://stackoverflow.com/questions/4330812/how-do-i-clear-a-stringio-object
+    curl.payload_io.truncate(0)
+    curl.payload_io.seek(0)
+
+    data = curl.get(image_url)
     with open(filename, "wb") as file:
         file.write(data)
 
@@ -145,9 +151,12 @@ def main():
                         help="allow to fetch explicit (R-18) images")
     args = parser.parse_args()
 
+    c = curl.Curl()
+    set_curl_options(c)
+
     while 1:
-        random_url = pick_up_a_url(args.r18)
-        full_info = fetch_image_info(random_url)
+        random_url = pick_up_a_url(c, args.r18)
+        full_info = fetch_image_info(c, random_url)
 
         image_info = full_info["posts"][0]
         if (args.height and args.width and
@@ -168,7 +177,7 @@ def main():
     else:
         file_url = "https:%s" % image_info["file_url"]
 
-    download_image(file_url, filename)
+    download_image(c, file_url, filename)
     set_wallpaper(filename)
 
 
